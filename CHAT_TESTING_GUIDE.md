@@ -3,12 +3,14 @@
 ## 🚀 Quick Start
 
 ### 1. Get Gemini API Key
+
 1. Visit https://makersuite.google.com/app/apikey
 2. Sign in with Google account
 3. Click "Create API Key"
 4. Copy the API key
 
 ### 2. Configure App
+
 1. Open Data Clerk app
 2. Tap drawer menu (≡) → Settings
 3. Scroll to "API Configuration"
@@ -16,6 +18,7 @@
 5. API key is automatically saved
 
 ### 3. Start Chatting
+
 1. Return to Home screen
 2. Select a database from the list
 3. Tap "💬 Chat with DB" button
@@ -53,6 +56,7 @@ Compare sales by region
 ### Chart-Worthy Queries
 
 **Bar Charts:**
+
 ```
 Show order counts by customer
 Compare product sales
@@ -60,6 +64,7 @@ Revenue by month
 ```
 
 **Line Charts:**
+
 ```
 Show sales trend over time
 Track customer growth
@@ -67,6 +72,7 @@ Daily revenue pattern
 ```
 
 **Pie Charts:**
+
 ```
 Order distribution by status
 Sales breakdown by category
@@ -76,12 +82,14 @@ Customer segments
 ## ✅ Expected Behaviors
 
 ### Text Responses
+
 - Natural language summary
 - Single text bubble
 - Assistant avatar on left
 - Dark surface background
 
 ### Table Responses
+
 - Header row with column names (blue accent)
 - Data rows (alternating colors)
 - Horizontal scroll for wide tables
@@ -89,6 +97,7 @@ Customer segments
 - Description text above table
 
 ### Chart Responses
+
 - Bar: Vertical bars with gradients
 - Line: Connected points with path
 - Pie: Donut chart with legend
@@ -96,12 +105,14 @@ Customer segments
 - Values/percentages labeled
 
 ### Multiple Messages
+
 - Single query can generate multiple bubbles
 - Example: Text summary + chart
 - Stacked vertically
 - Same timestamp
 
 ### Error Cases
+
 - No API key: Warning icon, "API Key Required"
 - Network error: Red bubble with error message
 - Invalid query: Error explanation from Gemini
@@ -110,6 +121,7 @@ Customer segments
 ## 🐛 Debugging
 
 ### Check API Key
+
 ```kotlin
 // In PreferencesManager.kt
 fun hasGeminiApiKey(): Boolean {
@@ -118,12 +130,15 @@ fun hasGeminiApiKey(): Boolean {
 ```
 
 ### Check Network
+
 - Backend must be running at `http://10.0.2.2:8090/api`
 - Test with: `curl http://10.0.2.2:8090/api/health`
 - Gemini API must be accessible
 
 ### Check Logs
+
 Look for these tags:
+
 ```
 ChatRepository: Processing query
 ChatRepository: Generated SQL
@@ -153,12 +168,14 @@ ChatViewModel: Success/Error
 ## 🔍 Response Format Validation
 
 ### Valid TEXT Response
+
 ```
 TYPE: TEXT
 CONTENT: The total revenue is $5,432.10 from 128 orders.
 ```
 
 ### Valid TABLE Response
+
 ```
 TYPE: TABLE
 CONTENT: Here are your recent orders
@@ -168,6 +185,7 @@ ROWS: 2|Jane Smith|250.00|pending
 ```
 
 ### Valid CHART Response
+
 ```
 TYPE: CHART_BAR
 CONTENT: Order distribution by customer
@@ -176,6 +194,7 @@ VALUES: 15|23|8
 ```
 
 ### Multiple Messages
+
 ```
 TYPE: TEXT
 CONTENT: Analysis of your sales data shows strong growth.
@@ -193,6 +212,7 @@ VALUES: 1000|1200|1100|1500|1800|2000
 Create test databases with these schemas:
 
 ### E-commerce Database
+
 ```sql
 CREATE TABLE customers (
     id SERIAL PRIMARY KEY,
@@ -275,12 +295,14 @@ What's our order completion rate?
 ## 📝 Test Checklist
 
 ### Pre-Testing
+
 - [ ] Backend server is running
 - [ ] Database has sample data
 - [ ] Gemini API key is obtained
 - [ ] App is installed on device/emulator
 
 ### Settings Screen
+
 - [ ] Can navigate to Settings
 - [ ] API key field is visible
 - [ ] Can paste API key
@@ -289,6 +311,7 @@ What's our order completion rate?
 - [ ] Navigate back to Home
 
 ### Chat Screen
+
 - [ ] Can navigate to Chat from database
 - [ ] Database name shows in header
 - [ ] Empty state displays correctly
@@ -296,6 +319,7 @@ What's our order completion rate?
 - [ ] Send button is clickable
 
 ### Text Queries
+
 - [ ] Simple count query works
 - [ ] Aggregation query works
 - [ ] Summary query works
@@ -303,6 +327,7 @@ What's our order completion rate?
 - [ ] Text is readable
 
 ### Table Queries
+
 - [ ] List query generates table
 - [ ] Headers display correctly
 - [ ] Rows display correctly
@@ -310,6 +335,7 @@ What's our order completion rate?
 - [ ] Row count is shown
 
 ### Chart Queries
+
 - [ ] Bar chart renders correctly
 - [ ] Line chart renders correctly
 - [ ] Pie chart renders correctly
@@ -317,12 +343,14 @@ What's our order completion rate?
 - [ ] Values are accurate
 
 ### Error Handling
+
 - [ ] No API key shows warning
 - [ ] Network error shows error message
 - [ ] Invalid query shows helpful message
 - [ ] Can recover from errors
 
 ### Performance
+
 - [ ] Response time is acceptable (< 10s)
 - [ ] UI remains responsive during processing
 - [ ] Scrolling is smooth

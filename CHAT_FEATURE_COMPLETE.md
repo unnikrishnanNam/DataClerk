@@ -9,17 +9,20 @@ The chat feature has been successfully implemented with Gemini AI integration fo
 ### New Files Created
 
 1. **GeminiApiService.kt** (`data/api/`)
+
    - Retrofit interface for Gemini AI API
    - Request/response models for API communication
    - Temperature control for SQL generation vs result formatting
 
 2. **ChatRepository.kt** (`data/repository/`)
+
    - Complete chat processing pipeline
    - 3-phase processing: SQL generation → execution → result formatting
    - Prompt engineering for structured responses
    - Response parsing for TEXT, TABLE, and CHART types
 
 3. **ChatViewModel.kt** (`ui/screens/chat/`)
+
    - State management for chat messages
    - Processing state handling
    - API key initialization
@@ -32,6 +35,7 @@ The chat feature has been successfully implemented with Gemini AI integration fo
 ### Modified Files
 
 1. **ChatScreen.kt**
+
    - Updated MessageBubble to render TEXT, TABLE, and CHART types
    - Added TableView component with scrollable columns
    - Added ChartView components (BarChart, LineChart, PieChart)
@@ -39,16 +43,19 @@ The chat feature has been successfully implemented with Gemini AI integration fo
    - Updated EmptyChatState to show API key requirement
 
 2. **ChatModels.kt**
+
    - Added TableData model (headers + rows)
    - Added ChartData model (type + labels + values)
    - Added ChartType enum (BAR, LINE, PIE)
    - Updated ChatMessage with tableData/chartData fields
 
 3. **RetrofitClient.kt**
+
    - Added separate Gemini API service instance
    - Configured base URL for Gemini API
 
 4. **SettingsScreen.kt**
+
    - Added Gemini API Key input field
    - Added password-style masking with show/hide toggle
    - Integrated PreferencesManager for persistent storage
@@ -156,12 +163,14 @@ Separate multiple messages with ---MESSAGE---
 ## 🎨 UI Components
 
 ### MessageBubble
+
 - Displays user and assistant messages
 - Role-based layout (left for assistant, right for user)
 - Conditional rendering based on content type
 - Error state styling
 
 ### TableView
+
 - Horizontal scroll for wide tables
 - Header row with accent background
 - Alternating row colors
@@ -171,18 +180,21 @@ Separate multiple messages with ---MESSAGE---
 ### ChartViews
 
 #### BarChartView
+
 - Vertical bars with gradient fill
 - Value labels above bars
 - Normalized heights
 - Responsive to data range
 
 #### LineChartView
+
 - Canvas-based path drawing
 - Grid lines for reference
 - Data point circles
 - Smooth line connections
 
 #### PieChartView
+
 - Donut-style chart
 - Legend with color indicators
 - Percentage labels
@@ -191,22 +203,26 @@ Separate multiple messages with ---MESSAGE---
 ## 🔑 API Key Configuration
 
 ### Storage
+
 - Stored in SharedPreferences via PreferencesManager
 - Key: `gemini_api_key`
 - Default: empty string
 
 ### UI
+
 - Settings screen has dedicated input field
 - Password-style masking with show/hide toggle
 - Help text: "Required for AI-powered chat features"
 - Changes saved automatically via LaunchedEffect
 
 ### Validation
+
 - ChatScreen shows warning if no API key configured
 - Empty state displays "API Key Required" message
 - Suggests navigating to Settings
 
 ### Usage
+
 ```kotlin
 // In AppNavigation.kt
 val prefsManager = remember { PreferencesManager(context) }
@@ -223,29 +239,37 @@ ChatScreen(
 ## 🧪 Testing Scenarios
 
 ### 1. Simple Query
+
 **Input:** "Show me all customers"
 **Expected:**
+
 - SQL: `SELECT * FROM customers LIMIT 100`
 - Format: TABLE with customer data
 - Headers: id, name, email, etc.
 
 ### 2. Aggregation Query
+
 **Input:** "How many orders per customer?"
 **Expected:**
+
 - SQL: `SELECT customer_id, COUNT(*) FROM orders GROUP BY customer_id`
 - Format: CHART_BAR
 - Labels: Customer names/IDs
 - Values: Order counts
 
 ### 3. Summary Query
+
 **Input:** "What's the total revenue?"
 **Expected:**
+
 - SQL: `SELECT SUM(amount) FROM orders`
 - Format: TEXT
 - Content: "The total revenue is $X,XXX.XX"
 
 ### 4. Multiple Messages
+
 **Expected Response:**
+
 ```
 TYPE: TEXT
 CONTENT: Here's an analysis of your sales data...
@@ -261,21 +285,25 @@ VALUES: 1000|1500|1200
 ## ⚠️ Error Handling
 
 ### No API Key
+
 - Empty state shows warning icon
 - Message: "API Key Required"
 - Directs user to Settings
 
 ### Network Error
+
 - Displays error message bubble
 - Red accent color
 - Error icon in avatar
 
 ### Invalid SQL
+
 - Gemini generates syntactically correct SQL
 - If execution fails, shows database error
 - User can rephrase and try again
 
 ### Parsing Error
+
 - Falls back to TEXT format
 - Shows raw Gemini response
 - Logs error for debugging
@@ -283,6 +311,7 @@ VALUES: 1000|1500|1200
 ## 🚀 Future Enhancements
 
 ### Planned Features
+
 - [ ] Chat history persistence (Room database)
 - [ ] Export results (CSV, PDF)
 - [ ] Query suggestions/autocomplete
@@ -293,6 +322,7 @@ VALUES: 1000|1500|1200
 - [ ] Share results
 
 ### Optimization Opportunities
+
 - [ ] Cache schema to reduce API calls
 - [ ] Debounce typing for real-time suggestions
 - [ ] Paginate large result sets
@@ -303,6 +333,7 @@ VALUES: 1000|1500|1200
 ## 📚 Dependencies
 
 All dependencies already included in `app/build.gradle.kts`:
+
 - Retrofit (API communication)
 - Gson (JSON parsing)
 - Compose (UI)
