@@ -46,8 +46,11 @@ object Routes {
     const val CHAT = "chat"
     const val SETTINGS = "settings"
     const val SCHEMA_VIEWER = "schema_viewer"
+    const val HISTORY = "history"
     const val ERROR = "error"
     
     fun chatWithDatabase(databaseName: String) = "chat/$databaseName"
+    fun chatWithConversation(databaseName: String, conversationId: Long) = "chat/$databaseName?conversationId=$conversationId"
     fun schemaViewer(databaseName: String) = "schema_viewer/$databaseName"
+    fun history(databaseName: String) = "history/$databaseName"
 }

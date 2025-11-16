@@ -1,8 +1,10 @@
 package com.unnikrishnan.dataclerk.ui.screens.chat
 
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.unnikrishnan.dataclerk.data.models.*
+import com.unnikrishnan.dataclerk.data.repository.ChatHistoryRepository
 import com.unnikrishnan.dataclerk.data.repository.ChatRepository
 import com.unnikrishnan.dataclerk.data.repository.MessageContent
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -13,9 +15,10 @@ import kotlinx.coroutines.launch
 /**
  * ViewModel for Chat Screen
  */
-class ChatViewModel : ViewModel() {
+class ChatViewModel(application: Application) : AndroidViewModel(application) {
     
     private val chatRepository = ChatRepository()
+    private val chatHistoryRepository = ChatHistoryRepository(application)
     
     private val _messages = MutableStateFlow<List<ChatMessage>>(emptyList())
     val messages: StateFlow<List<ChatMessage>> = _messages.asStateFlow()
@@ -27,20 +30,35 @@ class ChatViewModel : ViewModel() {
     val geminiApiKey: StateFlow<String?> = _geminiApiKey.asStateFlow()
     
     private var currentDatabaseName: String = ""
+    private var currentConversationId: Long? = null
     
-    fun initialize(databaseName: String, apiKey: String?) {
+    fun initialize(databaseName: String, apiKey: String?, conversationId: Long? = null) {
         currentDatabaseName = databaseName
         _geminiApiKey.value = apiKey
+        currentConversationId = conversationId
         
-        // Add welcome message
-        if (_messages.value.isEmpty()) {
-            addMessage(
-                ChatMessage(
-                    content = "Hello! I'm your database assistant for **$databaseName**. Ask me anything about your data, and I'll help you analyze it.",
-                    role = MessageRole.ASSISTANT,
-                    contentType = MessageContentType.TEXT
+        // Load existing conversation or start new
+        if (conversationId != null) {
+            loadConversation(conversationId)
+        } else {
+            // Add welcome message for new conversation
+            if (_messages.value.isEmpty()) {
+                addMessage(
+                    ChatMessage(
+                        content = "Hello! I'm your database assistant for **$databaseName**. Ask me anything about your data, and I'll help you analyze it.",
+                        role = MessageRole.ASSISTANT,
+                        contentType = MessageContentType.TEXT
+                    )
                 )
-            )
+            }
+        }
+    }
+    
+    private fun loadConversation(conversationId: Long) {
+        viewModelScope.launch {
+            chatHistoryRepository.getConversationMessages(conversationId).collect { messages ->
+                _messages.value = messages
+            }
         }
     }
     
@@ -63,17 +81,46 @@ class ChatViewModel : ViewModel() {
             return
         }
         
-        // Add user message
-        addMessage(
-            ChatMessage(
+        // Create new conversation if needed (first message)
+        if (currentConversationId == null) {
+            viewModelScope.launch {
+                val conversationId = chatHistoryRepository.createConversation(
+                    databaseName = currentDatabaseName,
+                    firstMessage = userPrompt
+                )
+                currentConversationId = conversationId
+                
+                // Now add and save the user message
+                val userMessage = ChatMessage(
+                    content = userPrompt,
+                    role = MessageRole.USER,
+                    contentType = MessageContentType.TEXT
+                )
+                addMessage(userMessage)
+                chatHistoryRepository.saveMessage(conversationId, userMessage)
+                
+                // Process query
+                processUserQuery(userPrompt, apiKey)
+            }
+        } else {
+            // Add user message
+            val userMessage = ChatMessage(
                 content = userPrompt,
                 role = MessageRole.USER,
                 contentType = MessageContentType.TEXT
             )
-        )
-        
-        // Process query
-        processUserQuery(userPrompt, apiKey)
+            addMessage(userMessage)
+            
+            // Save to database
+            viewModelScope.launch {
+                currentConversationId?.let { conversationId ->
+                    chatHistoryRepository.saveMessage(conversationId, userMessage)
+                }
+            }
+            
+            // Process query
+            processUserQuery(userPrompt, apiKey)
+        }
     }
     
     private fun processUserQuery(userPrompt: String, apiKey: String) {
@@ -104,61 +151,64 @@ class ChatViewModel : ViewModel() {
     private fun handleSuccessfulResponse(response: com.unnikrishnan.dataclerk.data.repository.ChatResponse) {
         // Add messages based on formatted response
         response.formattedResponse.messages.forEach { content ->
-            when (content) {
+            val message = when (content) {
                 is MessageContent.Text -> {
-                    addMessage(
-                        ChatMessage(
-                            content = content.content,
-                            role = MessageRole.ASSISTANT,
-                            contentType = MessageContentType.TEXT,
-                            metadata = MessageMetadata(
-                                query = response.sqlQuery,
-                                rowCount = response.queryResults.size,
-                                executionTime = response.executionTime
-                            )
+                    ChatMessage(
+                        content = content.content,
+                        role = MessageRole.ASSISTANT,
+                        contentType = MessageContentType.TEXT,
+                        metadata = MessageMetadata(
+                            query = response.sqlQuery,
+                            rowCount = response.queryResults.size,
+                            executionTime = response.executionTime
                         )
                     )
                 }
                 is MessageContent.Table -> {
-                    addMessage(
-                        ChatMessage(
-                            content = content.description,
-                            role = MessageRole.ASSISTANT,
-                            contentType = MessageContentType.TABLE,
-                            tableData = TableData(
-                                headers = content.headers,
-                                rows = content.rows
-                            ),
-                            metadata = MessageMetadata(
-                                query = response.sqlQuery,
-                                rowCount = response.queryResults.size,
-                                executionTime = response.executionTime
-                            )
+                    ChatMessage(
+                        content = content.description,
+                        role = MessageRole.ASSISTANT,
+                        contentType = MessageContentType.TABLE,
+                        tableData = TableData(
+                            headers = content.headers,
+                            rows = content.rows
+                        ),
+                        metadata = MessageMetadata(
+                            query = response.sqlQuery,
+                            rowCount = response.queryResults.size,
+                            executionTime = response.executionTime
                         )
                     )
                 }
                 is MessageContent.Chart -> {
-                    addMessage(
-                        ChatMessage(
-                            content = content.description,
-                            role = MessageRole.ASSISTANT,
-                            contentType = MessageContentType.CHART,
-                            chartData = ChartData(
-                                type = when (content.type) {
-                                    com.unnikrishnan.dataclerk.data.repository.ChartType.BAR -> ChartType.BAR
-                                    com.unnikrishnan.dataclerk.data.repository.ChartType.LINE -> ChartType.LINE
-                                    com.unnikrishnan.dataclerk.data.repository.ChartType.PIE -> ChartType.PIE
-                                },
-                                labels = content.labels,
-                                values = content.values
-                            ),
-                            metadata = MessageMetadata(
-                                query = response.sqlQuery,
-                                rowCount = response.queryResults.size,
-                                executionTime = response.executionTime
-                            )
+                    ChatMessage(
+                        content = content.description,
+                        role = MessageRole.ASSISTANT,
+                        contentType = MessageContentType.CHART,
+                        chartData = ChartData(
+                            type = when (content.type) {
+                                com.unnikrishnan.dataclerk.data.repository.ChartType.BAR -> ChartType.BAR
+                                com.unnikrishnan.dataclerk.data.repository.ChartType.LINE -> ChartType.LINE
+                                com.unnikrishnan.dataclerk.data.repository.ChartType.PIE -> ChartType.PIE
+                            },
+                            labels = content.labels,
+                            values = content.values
+                        ),
+                        metadata = MessageMetadata(
+                            query = response.sqlQuery,
+                            rowCount = response.queryResults.size,
+                            executionTime = response.executionTime
                         )
                     )
+                }
+            }
+            
+            addMessage(message)
+            
+            // Save to database
+            viewModelScope.launch {
+                currentConversationId?.let { conversationId ->
+                    chatHistoryRepository.saveMessage(conversationId, message)
                 }
             }
         }
@@ -181,6 +231,7 @@ class ChatViewModel : ViewModel() {
     
     fun clearChat() {
         _messages.value = emptyList()
+        currentConversationId = null
         initialize(currentDatabaseName, _geminiApiKey.value)
     }
 }

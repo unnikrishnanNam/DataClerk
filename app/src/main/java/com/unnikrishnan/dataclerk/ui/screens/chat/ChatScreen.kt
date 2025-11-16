@@ -41,12 +41,14 @@ import com.unnikrishnan.dataclerk.ui.theme.*
 fun ChatScreen(
     databaseName: String,
     geminiApiKey: String?,
+    conversationId: Long? = null,
     onNavigateBack: () -> Unit,
+    onNavigateToHistory: ((String) -> Unit)? = null,
     viewModel: ChatViewModel = viewModel()
 ) {
-    // Initialize ViewModel
-    LaunchedEffect(databaseName) {
-        viewModel.initialize(databaseName, geminiApiKey)
+    // Initialize ViewModel with conversationId
+    LaunchedEffect(databaseName, conversationId) {
+        viewModel.initialize(databaseName, geminiApiKey, conversationId)
     }
     
     var messageText by remember { mutableStateOf("") }
@@ -66,7 +68,9 @@ fun ChatScreen(
         topBar = {
             ChatTopBar(
                 databaseName = databaseName,
-                onNavigateBack = onNavigateBack
+                onNavigateBack = onNavigateBack,
+                onNavigateToHistory = { onNavigateToHistory?.invoke(databaseName) },
+                onClearChat = { viewModel.clearChat() }
             )
         },
         bottomBar = {
@@ -112,7 +116,9 @@ fun ChatScreen(
 @Composable
 private fun ChatTopBar(
     databaseName: String,
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    onNavigateToHistory: () -> Unit,
+    onClearChat: () -> Unit
 ) {
     TopAppBar(
         title = {
@@ -150,17 +156,17 @@ private fun ChatTopBar(
             }
         },
         actions = {
-            IconButton(onClick = { /* TODO: Clear chat */ }) {
+            IconButton(onClick = onNavigateToHistory) {
                 Icon(
-                    imageVector = Icons.Default.DeleteOutline,
-                    contentDescription = "Clear chat",
+                    imageVector = Icons.Default.History,
+                    contentDescription = "View history",
                     tint = TextSecondary
                 )
             }
-            IconButton(onClick = { /* TODO: More options */ }) {
+            IconButton(onClick = onClearChat) {
                 Icon(
-                    imageVector = Icons.Default.MoreVert,
-                    contentDescription = "More options",
+                    imageVector = Icons.Default.DeleteOutline,
+                    contentDescription = "Clear chat",
                     tint = TextSecondary
                 )
             }

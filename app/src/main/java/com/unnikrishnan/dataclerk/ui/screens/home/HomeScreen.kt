@@ -29,8 +29,10 @@ import kotlinx.coroutines.launch
 @Composable
 fun HomeScreen(
     onNavigateToChat: (String) -> Unit,
+    onNavigateToChatWithId: (String, Long) -> Unit,
     onNavigateToSchema: (String) -> Unit,
     onNavigateToSettings: () -> Unit,
+    onNavigateToHistory: (String) -> Unit,
     viewModel: HomeViewModel = viewModel()
 ) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -140,6 +142,9 @@ fun HomeScreen(
                         },
                         onNewChat = { 
                             selectedDatabase?.let { onNavigateToChat(it) }
+                        },
+                        onHistory = {
+                            selectedDatabase?.let { onNavigateToHistory(it) }
                         }
                     )
                 }
@@ -153,11 +158,22 @@ fun HomeScreen(
                     )
                 }
                 
-                items(recentChats) { chat ->
-                    RecentChatItem(
-                        chat = chat,
-                        onClick = { /* Navigate to specific chat */ }
-                    )
+                if (recentChats.isEmpty()) {
+                    item {
+                        EmptyRecentChatsState()
+                    }
+                } else {
+                    items(recentChats) { chat ->
+                        RecentChatItem(
+                            chat = chat,
+                            onClick = { 
+                                onNavigateToChatWithId(
+                                    selectedDatabase ?: "",
+                                    chat.id.toLong()
+                                )
+                            }
+                        )
+                    }
                 }
                 
                 // Chat with Database Button
@@ -322,7 +338,8 @@ private fun DatabaseSelector(
 @Composable
 private fun QuickActions(
     onViewSchema: () -> Unit,
-    onNewChat: () -> Unit
+    onNewChat: () -> Unit,
+    onHistory: () -> Unit
 ) {
     Column {
         Text(
@@ -353,12 +370,50 @@ private fun QuickActions(
                 IconPillButton(
                     text = "History",
                     icon = Icons.Default.History,
-                    onClick = { /* TODO */ }
+                    onClick = onHistory
                 )
             }
         }
     }
 }
+
+@Composable
+private fun EmptyRecentChatsState() {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 16.dp),
+        color = SurfaceElevated1,
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = "💬",
+                style = MaterialTheme.typography.displayMedium
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = "No conversations yet",
+                style = MaterialTheme.typography.titleMedium,
+                color = TextPrimary
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "Start chatting with your database to see your conversation history here",
+                style = MaterialTheme.typography.bodyMedium,
+                color = TextSecondary,
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+            )
+        }
+    }
+}
+
 
 @Composable
 private fun RecentChatItem(

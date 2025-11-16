@@ -1,10 +1,13 @@
 package com.unnikrishnan.dataclerk.ui.screens.home
 
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.unnikrishnan.dataclerk.data.local.ChatConversationEntity
 import com.unnikrishnan.dataclerk.data.models.DatabaseInfo
 import com.unnikrishnan.dataclerk.data.models.RecentChat
 import com.unnikrishnan.dataclerk.data.models.UiState
+import com.unnikrishnan.dataclerk.data.repository.ChatHistoryRepository
 import com.unnikrishnan.dataclerk.data.repository.DatabaseRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -14,9 +17,10 @@ import kotlinx.coroutines.launch
 /**
  * ViewModel for Home Screen
  */
-class HomeViewModel : ViewModel() {
+class HomeViewModel(application: Application) : AndroidViewModel(application) {
     
     private val repository = DatabaseRepository()
+    private val chatHistoryRepository = ChatHistoryRepository(application)
     
     private val _databases = MutableStateFlow<UiState<List<String>>>(UiState.Loading)
     val databases: StateFlow<UiState<List<String>>> = _databases.asStateFlow()
@@ -32,7 +36,6 @@ class HomeViewModel : ViewModel() {
     
     init {
         loadDatabases()
-        loadMockRecentChats() // Mock data for now
     }
     
     private fun loadDatabases() {
@@ -61,6 +64,7 @@ class HomeViewModel : ViewModel() {
     fun selectDatabase(dbName: String) {
         _selectedDatabase.value = dbName
         loadDatabaseInfo(dbName)
+        loadRecentChats(dbName)
     }
     
     private fun loadDatabaseInfo(dbName: String) {
@@ -89,37 +93,29 @@ class HomeViewModel : ViewModel() {
         }
     }
     
-    fun refresh() {
-        loadDatabases()
+    private fun loadRecentChats(dbName: String) {
+        viewModelScope.launch {
+            chatHistoryRepository.getRecentConversations(5)
+                .collect { conversations ->
+                    _recentChats.value = conversations
+                        .filter { it.databaseName == dbName }
+                        .map { it.toRecentChat() }
+                }
+        }
     }
     
-    private fun loadMockRecentChats() {
-        // Mock data for now - will be replaced with real chat history later
-        _recentChats.value = listOf(
-            RecentChat(
-                id = "1",
-                databaseName = _selectedDatabase.value ?: "testdb",
-                title = "Product sales analysis",
-                lastMessage = "Show me top 5 products...",
-                timestamp = System.currentTimeMillis() - 3600000,
-                messageCount = 8
-            ),
-            RecentChat(
-                id = "2",
-                databaseName = _selectedDatabase.value ?: "testdb",
-                title = "Customer insights",
-                lastMessage = "How many active customers?",
-                timestamp = System.currentTimeMillis() - 7200000,
-                messageCount = 5
-            ),
-            RecentChat(
-                id = "3",
-                databaseName = _selectedDatabase.value ?: "postgres",
-                title = "Revenue breakdown",
-                lastMessage = "Monthly revenue trends",
-                timestamp = System.currentTimeMillis() - 86400000,
-                messageCount = 12
-            )
-        )
+    fun refresh() {
+        loadDatabases()
+        _selectedDatabase.value?.let { loadRecentChats(it) }
     }
+    
+    private fun ChatConversationEntity.toRecentChat() = RecentChat(
+        id = id.toString(),
+        databaseName = databaseName,
+        title = title,
+        lastMessage = title, // Using title as preview for now
+        timestamp = updatedAt,
+        messageCount = messageCount
+    )
 }
+
