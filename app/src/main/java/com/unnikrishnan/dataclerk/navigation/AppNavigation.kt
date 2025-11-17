@@ -118,6 +118,7 @@ fun AppNavigation(
             viewModel.loadConversations(databaseName)
             
             HistoryScreen(
+
                 databaseName = databaseName,
                 conversations = conversations,
                 onBackClick = {
