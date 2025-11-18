@@ -13,6 +13,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
@@ -30,6 +32,7 @@ fun SettingsScreen(
     var enableHaptics by remember { mutableStateOf(prefsManager.enableHaptics) }
     var enableAnimations by remember { mutableStateOf(prefsManager.enableAnimations) }
     var autoRefresh by remember { mutableStateOf(prefsManager.autoRefresh) }
+    var autoRefreshInterval by remember { mutableStateOf(prefsManager.autoRefreshInterval) }
     var baseUrl by remember { mutableStateOf(prefsManager.baseUrl) }
     var geminiApiKey by remember { mutableStateOf(prefsManager.geminiApiKey) }
     var showApiKey by remember { mutableStateOf(false) }
@@ -37,6 +40,10 @@ fun SettingsScreen(
     // Save changes when values update
     LaunchedEffect(baseUrl) {
         prefsManager.baseUrl = baseUrl
+        // update Retrofit client to use new base URL immediately
+        try {
+            com.unnikrishnan.dataclerk.data.api.RetrofitClient.updateBaseUrl(baseUrl)
+        } catch (_: Exception) {}
     }
     
     LaunchedEffect(geminiApiKey) {
@@ -54,6 +61,12 @@ fun SettingsScreen(
     LaunchedEffect(autoRefresh) {
         prefsManager.autoRefresh = autoRefresh
     }
+
+    LaunchedEffect(autoRefreshInterval) {
+        prefsManager.autoRefreshInterval = autoRefreshInterval
+    }
+
+    val haptic = LocalHapticFeedback.current
     
     Scaffold(
         topBar = {
@@ -195,7 +208,13 @@ fun SettingsScreen(
                     title = "Enable Haptics",
                     description = "Vibration feedback for interactions",
                     checked = enableHaptics,
-                    onCheckedChange = { enableHaptics = it },
+                    onCheckedChange = { newValue ->
+                        enableHaptics = newValue
+                        // If enabling, give a quick confirmation haptic
+                        if (newValue) {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        }
+                    },
                     icon = Icons.Default.Vibration
                 )
             }
@@ -205,7 +224,10 @@ fun SettingsScreen(
                     title = "Enable Animations",
                     description = "Smooth transitions and animations",
                     checked = enableAnimations,
-                    onCheckedChange = { enableAnimations = it },
+                    onCheckedChange = { newValue ->
+                        enableAnimations = newValue
+                        if (prefsManager.enableHaptics) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    },
                     icon = Icons.Default.Animation
                 )
             }
@@ -215,9 +237,43 @@ fun SettingsScreen(
                     title = "Auto-refresh Data",
                     description = "Automatically refresh database info",
                     checked = autoRefresh,
-                    onCheckedChange = { autoRefresh = it },
+                    onCheckedChange = { newValue ->
+                        autoRefresh = newValue
+                        if (prefsManager.enableHaptics) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    },
                     icon = Icons.Default.Refresh
                 )
+
+                if (autoRefresh) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        OutlinedTextField(
+                            value = autoRefreshInterval.toString(),
+                            onValueChange = { str ->
+                                val intVal = str.toIntOrNull() ?: 0
+                                if (intVal >= 5) autoRefreshInterval = intVal
+                            },
+                            label = { Text("Interval (s)") },
+                            singleLine = true,
+                            modifier = Modifier.width(160.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedTextColor = TextPrimary,
+                                unfocusedTextColor = TextPrimary,
+                                focusedBorderColor = AccentPrimary,
+                                unfocusedBorderColor = BorderColor
+                            )
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(
+                            text = "Refresh every $autoRefreshInterval seconds",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextSecondary
+                        )
+                    }
+                }
             }
             
             // About Section

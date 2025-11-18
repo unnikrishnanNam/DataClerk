@@ -11,7 +11,7 @@ import java.util.concurrent.TimeUnit
  */
 object RetrofitClient {
     
-    private const val DEFAULT_BASE_URL = "http://10.144.98.81:8090/api/" // Android emulator localhost
+    private const val DEFAULT_BASE_URL = "http://10.191.182.85:8090/api/" // Android emulator localhost
     private const val GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/"
     
     private var baseUrl: String = DEFAULT_BASE_URL
@@ -75,33 +75,21 @@ object RetrofitClient {
     }
     
     /**
-     * Retrofit instance
+     * API service instance (built on access so it reflects latest baseUrl)
      */
-    private val retrofit: Retrofit by lazy {
-        Retrofit.Builder()
-            .baseUrl(baseUrl)
-            .client(okHttpClient)
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-    }
-    
-    /**
-     * API service instance
-     */
-    val apiService: DataClerkApiService by lazy {
-        retrofit.create(DataClerkApiService::class.java)
-    }
-    
-    /**
-     * Create a new Retrofit instance with updated base URL
-     */
-    fun recreateApiService(): DataClerkApiService {
-        return Retrofit.Builder()
+    val apiService: DataClerkApiService
+        get() = Retrofit.Builder()
             .baseUrl(baseUrl)
             .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
             .create(DataClerkApiService::class.java)
+    
+    /**
+     * Create a new Retrofit instance with updated base URL
+     */
+    fun recreateApiService(): DataClerkApiService {
+        return apiService
     }
     
     /**

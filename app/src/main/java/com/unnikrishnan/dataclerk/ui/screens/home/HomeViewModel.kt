@@ -12,6 +12,7 @@ import com.unnikrishnan.dataclerk.data.repository.DatabaseRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 /**
@@ -21,6 +22,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     
     private val repository = DatabaseRepository()
     private val chatHistoryRepository = ChatHistoryRepository(application)
+    private val prefsManager = com.unnikrishnan.dataclerk.data.preferences.PreferencesManager(application)
     
     private val _databases = MutableStateFlow<UiState<List<String>>>(UiState.Loading)
     val databases: StateFlow<UiState<List<String>>> = _databases.asStateFlow()
@@ -36,6 +38,29 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     
     init {
         loadDatabases()
+        startAutoRefresh()
+    }
+
+    private fun startAutoRefresh() {
+        viewModelScope.launch {
+            while (isActive) {
+                try {
+                    val enabled = prefsManager.autoRefresh
+                    val interval = prefsManager.autoRefreshInterval.coerceAtLeast(5)
+                    if (enabled) {
+                        _selectedDatabase.value?.let { db ->
+                            // refresh info and recent chats
+                            loadDatabaseInfo(db)
+                            loadRecentChats(db)
+                        }
+                    }
+                    kotlinx.coroutines.delay(interval * 1000L)
+                } catch (_: Exception) {
+                    // swallow and continue
+                    kotlinx.coroutines.delay(5000L)
+                }
+            }
+        }
     }
     
     private fun loadDatabases() {

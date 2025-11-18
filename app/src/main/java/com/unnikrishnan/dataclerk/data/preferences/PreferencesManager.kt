@@ -24,6 +24,7 @@ class PreferencesManager(context: Context) {
         private const val KEY_ENABLE_HAPTICS = "enable_haptics"
         private const val KEY_ENABLE_ANIMATIONS = "enable_animations"
         private const val KEY_AUTO_REFRESH = "auto_refresh"
+        private const val KEY_AUTO_REFRESH_INTERVAL = "auto_refresh_interval"
         private const val KEY_THEME_MODE = "theme_mode"
         private const val KEY_SELECTED_DATABASE = "selected_database"
         
@@ -57,6 +58,11 @@ class PreferencesManager(context: Context) {
     var autoRefresh: Boolean
         get() = sharedPreferences.getBoolean(KEY_AUTO_REFRESH, true)
         set(value) = sharedPreferences.edit().putBoolean(KEY_AUTO_REFRESH, value).apply()
+
+    // Auto refresh interval (seconds)
+    var autoRefreshInterval: Int
+        get() = sharedPreferences.getInt(KEY_AUTO_REFRESH_INTERVAL, 30)
+        set(value) = sharedPreferences.edit().putInt(KEY_AUTO_REFRESH_INTERVAL, value).apply()
     
     // Theme Mode
     var themeMode: ThemeMode
@@ -79,7 +85,7 @@ class PreferencesManager(context: Context) {
             baseUrl = baseUrl,
             enableHaptics = enableHaptics,
             enableAnimations = enableAnimations,
-            autoRefreshInterval = 30, // default value
+            autoRefreshInterval = autoRefreshInterval,
             theme = themeMode
         )
     }
@@ -93,6 +99,7 @@ class PreferencesManager(context: Context) {
             putBoolean(KEY_ENABLE_HAPTICS, settings.enableHaptics)
             putBoolean(KEY_ENABLE_ANIMATIONS, settings.enableAnimations)
             putInt(KEY_THEME_MODE, settings.theme.ordinal)
+            putInt(KEY_AUTO_REFRESH_INTERVAL, settings.autoRefreshInterval)
             apply()
         }
     }

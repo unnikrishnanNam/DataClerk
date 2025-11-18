@@ -17,6 +17,8 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.unnikrishnan.dataclerk.data.preferences.PreferencesManager
@@ -31,6 +33,7 @@ fun ErrorScreen(
     val prefsManager = remember { PreferencesManager(context) }
     var backendUrl by remember { mutableStateOf(prefsManager.baseUrl) }
     var showUrlInput by remember { mutableStateOf(false) }
+    val haptic = LocalHapticFeedback.current
     // Animation for the error icon
     val infiniteTransition = rememberInfiniteTransition(label = "error")
     val scale by infiniteTransition.animateFloat(
@@ -156,6 +159,11 @@ fun ErrorScreen(
                             Button(
                                 onClick = {
                                     prefsManager.baseUrl = backendUrl
+                                    // update retrofit client with new base URL
+                                    try {
+                                        com.unnikrishnan.dataclerk.data.api.RetrofitClient.updateBaseUrl(backendUrl)
+                                    } catch (_: Exception) {}
+                                    if (prefsManager.enableHaptics) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                     showUrlInput = false
                                     onRetry()
                                 },
