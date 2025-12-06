@@ -17,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -67,6 +68,24 @@ fun HomeScreen(
                         scope.launch { drawerState.open() }
                     }
                 )
+            },
+            floatingActionButton = {
+                if (selectedDatabase != null) {
+                    ExtendedFloatingActionButton(
+                        onClick = { selectedDatabase?.let { onNavigateToChat(it) } },
+                        icon = {
+                            Icon(
+                                imageVector = Icons.Default.Chat,
+                                contentDescription = "Chat with database"
+                            )
+                        },
+                        text = {
+                            Text(text = "Chat with DB")
+                        },
+                        containerColor = AccentPrimary,
+                        contentColor = Color.White
+                    )
+                }
             },
             containerColor = MaterialTheme.colorScheme.background
         ) { paddingValues ->
@@ -176,21 +195,7 @@ fun HomeScreen(
                     }
                 }
                 
-                // Chat with Database Button
-                item {
-                    PillButton(
-                        text = "Chat with Database",
-                        onClick = { 
-                            selectedDatabase?.let { onNavigateToChat(it) }
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        icon = Icons.Default.Chat,
-                        backgroundColor = AccentPrimary,
-                        enabled = selectedDatabase != null
-                    )
-                }
-                
-                item { Spacer(modifier = Modifier.height(16.dp)) }
+                item { Spacer(modifier = Modifier.height(56.dp)) }
             }
         }
     }

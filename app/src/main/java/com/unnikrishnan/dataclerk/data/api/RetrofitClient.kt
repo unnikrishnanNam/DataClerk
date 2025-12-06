@@ -11,7 +11,7 @@ import java.util.concurrent.TimeUnit
  */
 object RetrofitClient {
     
-    private const val DEFAULT_BASE_URL = "http://10.191.182.85:8090/api/" // Android emulator localhost
+    private const val DEFAULT_BASE_URL = "http://192.168.1.38:8090/api/" // Android emulator localhost
     private const val GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/"
     
     private var baseUrl: String = DEFAULT_BASE_URL

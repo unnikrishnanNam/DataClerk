@@ -46,24 +46,22 @@ fun ChatScreen(
     onNavigateToHistory: ((String) -> Unit)? = null,
     viewModel: ChatViewModel = viewModel()
 ) {
-    // Initialize ViewModel with conversationId
     LaunchedEffect(databaseName, conversationId) {
         viewModel.initialize(databaseName, geminiApiKey, conversationId)
     }
-    
+
     var messageText by remember { mutableStateOf("") }
     val messages by viewModel.messages.collectAsState()
     val isProcessing by viewModel.isProcessing.collectAsState()
-    
+
     val listState = rememberLazyListState()
 
-    // Auto-scroll to bottom when new message is added
     LaunchedEffect(messages.size) {
         if (messages.isNotEmpty()) {
             listState.animateScrollToItem(messages.size - 1)
         }
     }
-    
+
     Scaffold(
         topBar = {
             ChatTopBar(
@@ -184,16 +182,9 @@ private fun ChatInputBar(
     onSendMessage: () -> Unit,
     isProcessing: Boolean
 ) {
-    Surface(
+    Box(
         modifier = Modifier
             .fillMaxWidth()
-            .shadow(
-                elevation = 8.dp,
-                ambientColor = ShadowDark,
-                spotColor = ShadowDark
-            ),
-        color = SurfaceDark,
-        tonalElevation = 3.dp
     ) {
         Row(
             modifier = Modifier
@@ -398,40 +389,64 @@ private fun MessageBubble(
 
 @Composable
 private fun MessageMetadataView(metadata: MessageMetadata) {
-    Surface(
-        color = BackgroundDark.copy(alpha = 0.3f),
-        shape = RoundedCornerShape(8.dp)
+    if (metadata.query.isNullOrBlank()) return
+
+    var expanded by remember { mutableStateOf(false) }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(
+                color = SurfaceDark.copy(alpha = 0.6f),
+                shape = RoundedCornerShape(12.dp)
+            )
+            .padding(12.dp)
     ) {
-        Column(
-            modifier = Modifier.padding(8.dp)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            metadata.query?.let { query ->
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Surface(
+                    modifier = Modifier.size(28.dp),
+                    color = SurfaceElevated2,
+                    shape = CircleShape
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            imageVector = Icons.Default.DataObject,
+                            contentDescription = null,
+                            tint = AccentPrimary,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "Query: $query",
-                    style = MaterialTheme.typography.bodySmall,
+                    text = "Query",
+                    style = MaterialTheme.typography.labelMedium,
                     color = TextSecondary
                 )
             }
-            
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                metadata.rowCount?.let { count ->
-                    Text(
-                        text = "$count rows",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = TextTertiary
-                    )
-                }
-                
-                metadata.executionTime?.let { time ->
-                    Text(
-                        text = "${time}ms",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = TextTertiary
-                    )
-                }
+
+            TextButton(onClick = { expanded = !expanded }) {
+                Text(
+                    text = if (expanded) "Hide" else "Show",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = AccentPrimary
+                )
             }
+        }
+
+        if (expanded) {
+            Text(
+                text = metadata.query ?: "",
+                style = MaterialTheme.typography.bodySmall,
+                color = TextPrimary
+            )
         }
     }
 }

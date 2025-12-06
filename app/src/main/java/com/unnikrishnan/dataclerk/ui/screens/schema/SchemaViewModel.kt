@@ -32,6 +32,8 @@ class SchemaViewModel : ViewModel() {
     fun loadSchema(databaseName: String) {
         viewModelScope.launch {
             _tables.value = UiState.Loading
+            _filteredTables.value = emptyList()
+            _expandedTables.value = emptySet()
             
             val result = repository.getDatabaseSchema(databaseName)
             

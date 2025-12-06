@@ -76,18 +76,11 @@ Data Clerk is a modern Android application that revolutionizes database interact
 
 ## 📸 Screenshots
 
-> **Note:** Add screenshots of your app here showcasing:
->
-> - Home screen with database selection
-> - Chat interface with messages and tables
-> - Chart visualizations
-> - Schema viewer
-> - Conversation history
-> - Settings screen
+<div align="center">
 
-```
-📱 [Home Screen]  [Chat Interface]  [Charts]  [History]  [Settings]
-```
+<img src="docs/images/AppScreens.png" alt="Data Clerk App" width="800" />
+
+</div>
 
 ---
 

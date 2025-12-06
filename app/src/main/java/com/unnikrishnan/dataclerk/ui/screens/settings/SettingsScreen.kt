@@ -246,32 +246,31 @@ fun SettingsScreen(
 
                 if (autoRefresh) {
                     Spacer(modifier = Modifier.height(8.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        OutlinedTextField(
-                            value = autoRefreshInterval.toString(),
-                            onValueChange = { str ->
-                                val intVal = str.toIntOrNull() ?: 0
-                                if (intVal >= 5) autoRefreshInterval = intVal
-                            },
-                            label = { Text("Interval (s)") },
-                            singleLine = true,
-                            modifier = Modifier.width(160.dp),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedTextColor = TextPrimary,
-                                unfocusedTextColor = TextPrimary,
-                                focusedBorderColor = AccentPrimary,
-                                unfocusedBorderColor = BorderColor
+                    SettingsCard {
+                        Column(
+                            modifier = Modifier.padding(16.dp)
+                        ) {
+                            Text(
+                                text = "Refresh Interval",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = TextPrimary
                             )
-                        )
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Text(
-                            text = "Refresh every $autoRefreshInterval seconds",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = TextSecondary
-                        )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Slider(
+                                value = autoRefreshInterval.toFloat().coerceAtLeast(5f),
+                                onValueChange = { value ->
+                                    autoRefreshInterval = value.toInt().coerceAtLeast(5)
+                                },
+                                valueRange = 5f..120f,
+                                steps = 23
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = "Refresh every $autoRefreshInterval seconds",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = TextSecondary
+                            )
+                        }
                     }
                 }
             }
